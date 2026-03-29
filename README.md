@@ -2,7 +2,7 @@
 - [ ] Terminalで開いたときのTelescopeの設定がうまくいってない
 
 # インストールするもの
-- VSCode: Neovimの拡張機能
+- VSCodeを使う場合: Neovimの拡張機能
 - `wezterm`
 
 # Windowsのみ初回に実行すること
@@ -24,4 +24,7 @@ ln -s $DOTFILES/nvim $XDG_CONFIG_HOME/nvim
 
 # WezTerm
 ln -s $DOTFILES/wezterm $XDG_CONFIG_HOME/wezterm
+
+# Emacs
+ln -s $DOTFILES/emacs $XDG_CONFIG_HOME/emacs
 ```
