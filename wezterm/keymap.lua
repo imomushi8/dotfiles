@@ -1,0 +1,4 @@
+-- config.leader = { key = ",", mods = "CTRL", timeout_milliseconds = 1500 }
+-- config.disable_default_key_bindings = true
+-- config.keys = keybinds.keys
+-- config.key_tables = keybinds.key_tables
