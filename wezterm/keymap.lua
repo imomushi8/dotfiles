@@ -167,7 +167,7 @@ function M.setup(wezterm, config)
     end
   end
 
-  config.leader = { key = ',', mods = 'CTRL', timeout_milliseconds = 1000 }
+  config.leader = { key = ',', mods = 'CTRL', timeout_milliseconds = 1500 }
 
   config.keys = {
     -- Tab operations
@@ -189,17 +189,18 @@ function M.setup(wezterm, config)
     { key = 'l',     mods = 'LEADER|CTRL',       action = act.SplitHorizontal { domain = 'CurrentPaneDomain' } }, -- split horizontal
     { key = 'j',     mods = 'LEADER|CTRL',       action = act.SplitVertical { domain = 'CurrentPaneDomain' } },   -- split vertical
     { key = 'd',     mods = 'LEADER|CTRL',       action = act.CloseCurrentPane { confirm = true } },              -- close pane
-    { key = 'Space', mods = 'LEADER|CTRL',       action = act.RotatePanes 'Clockwise' },                          -- cycle layout
-    { key = 'Space', mods = 'LEADER|SHIFT|CTRL', action = act.RotatePanes 'CounterClockwise' },                   -- cycle layout counter
+    { key = 'q',     mods = 'LEADER|CTRL',       action = act.RotatePanes 'Clockwise' },                          -- cycle layout
+    { key = 'Q',     mods = 'LEADER|SHIFT|CTRL', action = act.RotatePanes 'CounterClockwise' },                   -- cycle layout counter
     { key = 'z',     mods = 'LEADER|CTRL',       action = act.TogglePaneZoomState },                              -- toggle zoom
-    { key = 'n',     mods = 'LEADER|CTRL',       action = act.ActivatePaneDirection 'Next' },                     -- next pane
-    { key = 'p',     mods = 'LEADER|CTRL',       action = act.ActivatePaneDirection 'Prev' },                     -- previous pane
-    { key = 'h',     mods = 'CTRL',              action = act.ActivatePaneDirection 'Left' },                     -- navigate panes (vim)
-    { key = 'j',     mods = 'CTRL',              action = act.ActivatePaneDirection 'Down' },
-    { key = 'k',     mods = 'CTRL',              action = act.ActivatePaneDirection 'Up' },
-    { key = 'l',     mods = 'CTRL',              action = act.ActivatePaneDirection 'Right' },
+    { key = 'Space', mods = 'LEADER|CTRL',       action = act.ActivatePaneDirection 'Next' },                     -- next pane
+    { key = 'Space', mods = 'LEADER|SHIFT|CTRL', action = act.ActivatePaneDirection 'Prev' },                     -- previous pane
+    -- vimっぽい移動（nvimと干渉するからコメントアウト）
+    -- { key = 'h',     mods = 'CTRL',              action = act.ActivatePaneDirection 'Left' },
+    -- { key = 'j',     mods = 'CTRL',              action = act.ActivatePaneDirection 'Down' },
+    -- { key = 'k',     mods = 'CTRL',              action = act.ActivatePaneDirection 'Up' },
+    -- { key = 'l',     mods = 'CTRL',              action = act.ActivatePaneDirection 'Right' },
 
-    -- Resize panes (vim style with Shift)
+    -- Resize panes
     { key = 'n', mods = 'LEADER|CTRL', action = act.AdjustPaneSize { 'Left', 5 } },
     { key = 'm', mods = 'LEADER|CTRL', action = act.AdjustPaneSize { 'Down', 5 } },
     { key = ',', mods = 'LEADER|CTRL', action = act.AdjustPaneSize { 'Up', 5 } },

@@ -10,5 +10,5 @@ Function Convert-Extension($oldExt, $newExt){
   Get-ChildItem -File -Name| Rename-Item -NewName { $_ -replace $oldExt, $newExt }
 }
 
-New-Alias -Name "convert" Convert-Extension
-New-Alias -Name "rs" Rename-Successively
+Set-Alias convert Convert-Extension
+Set-Alias rs Rename-Successively

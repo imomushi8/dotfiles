@@ -1,3 +1,10 @@
+# TODO
+- [ ] Terminalで開いたときのTelescopeの設定がうまくいってない
+
+# インストールするもの
+- VSCode: Neovimの拡張機能
+- `wezterm`
+
 # Windowsのみ初回に実行すること
 ```powershell
 ### ※シンボリックリンクを作成するため、管理者権限もしくは開発者モードで開く必要あり。

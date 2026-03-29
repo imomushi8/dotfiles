@@ -42,12 +42,7 @@ return {
         end,
       },
       integrations = {
-        aerial = true,
         mason = true,
-        navic = {
-            enabled = true,
-            custom_bg = "NONE",
-        },
         treesitter = true,
         lsp_trouble = true,
         gitgutter = true,

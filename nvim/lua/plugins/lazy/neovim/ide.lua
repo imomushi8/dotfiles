@@ -7,10 +7,10 @@ return {
     tag = "0.1.8",
     dependencies = { "nvim-lua/plenary.nvim" },
     keys = {
-      { mode = 'n', ';f', builtin.find_files, { desc = 'Telescope find files' } },
-      { mode = 'n', ';g', builtin.live_grep,  { desc = 'Telescope live grep' }  },
-      { mode = 'n', ';b', builtin.buffers,    { desc = 'Telescope buffers' }    },
-      { mode = 'n', ';h', builtin.help_tags,  { desc = 'Telescope help tags' }  },
+      { mode = 'n', '<leader>f', builtin.find_files, { desc = 'Telescope find files' } },
+      { mode = 'n', '<leader>g', builtin.live_grep,  { desc = 'Telescope live grep' }  },
+      { mode = 'n', '<leader>b', builtin.buffers,    { desc = 'Telescope buffers' }    },
+      { mode = 'n', '<leader>h', builtin.help_tags,  { desc = 'Telescope help tags' }  },
     }
   },
 
