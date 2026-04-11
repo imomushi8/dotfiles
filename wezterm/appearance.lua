@@ -11,9 +11,9 @@ function M.setup(wezterm, config)
   -- 全体
   ----------------------------------------------------
   config.window_background_opacity = 0.95
-  config.color_scheme = "Catppuccin Mocha"
   config.font_size = 11.0
   config.font = wezterm.font("JetBrainsMono Nerd Font")
+  config.color_scheme = 'Afterglow'
 
   ----------------------------------------------------
   -- ウィンドウ

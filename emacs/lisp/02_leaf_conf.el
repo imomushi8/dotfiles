@@ -1,4 +1,6 @@
 ;; leaf(パッケージマネージャ)設定
+(setq package-user-dir (expand-file-name "elpa" emacs-cache-dir)) ;; パッケージの保存場所
+
 (eval-and-compile
   (when (or load-file-name byte-compile-current-file)
     (setq user-emacs-directory

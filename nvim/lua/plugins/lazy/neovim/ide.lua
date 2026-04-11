@@ -1,5 +1,7 @@
 local builtin = require('telescope.builtin')
 
+-- TODO Startify的なやつとtelescopeの設定の完璧さ
+
 return {
   -- Fuzzy Finder
   {

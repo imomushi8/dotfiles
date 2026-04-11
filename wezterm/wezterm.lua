@@ -1,3 +1,4 @@
+-- weztermで最初に読み込まれる設定ファイル
 local wezterm = require("wezterm")
 
 -- 設定開始

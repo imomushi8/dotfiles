@@ -1,5 +1,4 @@
 archive/
 session/
-emacs/elpa/
-emacs/**/bookmarks
-emacs/auto-save-list/
+
+emacs/secret.el

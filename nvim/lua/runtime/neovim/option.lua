@@ -50,6 +50,7 @@ vim.opt.termguicolors = true
 
 vim.cmd("hi Constant ctermfg=14")
 vim.cmd("hi clear CursorLine")
+vim.cmd("hi Normal ctermbg=NONE guibg=NONE") -- setting the backgroud color to transparent.
 
 vim.opt.guifont = "JetBrainsMono Nerd Font Mono:h9"
 

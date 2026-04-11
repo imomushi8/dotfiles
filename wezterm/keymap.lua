@@ -4,216 +4,20 @@ function M.setup(wezterm, config)
   local act = wezterm.action
   local mux = wezterm.mux
 
-  -- config.disable_default_key_bindings = true
-  -- config.leader = { key = ",", mods = "CTRL", timeout_milliseconds = 1500 }
-  -- config.keys = keybinds.keys
-  -- config.key_tables = keybinds.key_tables
-
-  -- Expand ~ to home directory
-  local function expand_path(path)
-    if path and path:sub(1, 1) == '~' then
-      return wezterm.home_dir .. path:sub(2)
-    end
-    return path
-  end
-
-  -- ============================================
-  -- Project Workspace System
-  -- ============================================
-  local projects_dir = wezterm.home_dir .. '/.config/wezterm-projects'
-
-  local function load_projects()
-    local projects = {}
-    local handle = io.popen('ls -1 "' .. projects_dir .. '"/*.lua 2>/dev/null')
-    if handle then
-      for file in handle:lines() do
-        local name = file:match('([^/]+)%.lua$')
-        if name then
-          local ok, project = pcall(dofile, file)
-          if ok and project and project.workspace then
-            project.cwd = expand_path(project.cwd)
-            projects[project.workspace] = project
-          end
-        end
-      end
-      handle:close()
-    end
-    return projects
-  end
-
-  local function get_active_workspaces()
-    local active = {}
-    for _, win in ipairs(mux.all_windows()) do
-      active[win:get_workspace()] = true
-    end
-    return active
-  end
-
-  local function build_project_choices()
-    local projects = load_projects()
-    local active = get_active_workspaces()
-    local sort_data = {}
-    local seen = {}
-
-    for name, project in pairs(projects) do
-      seen[name] = true
-      local is_active = active[name] and true or false
-      local status = is_active and '● ' or '○ '
-      table.insert(sort_data, {
-        choice = {
-          id = 'project:' .. name,
-          label = status .. name .. ' (' .. (project.cwd or '?') .. ')',
-        },
-        is_active = is_active,
-      })
-    end
-
-    for name, _ in pairs(active) do
-      if not seen[name] then
-        table.insert(sort_data, {
-          choice = {
-            id = 'workspace:' .. name,
-            label = '● ' .. name .. ' (ad-hoc)',
-          },
-          is_active = true,
-        })
-      end
-    end
-
-    table.sort(sort_data, function(a, b)
-      if a.is_active ~= b.is_active then
-        return a.is_active  -- active first
-      end
-      return a.choice.label < b.choice.label  -- then alphabetical
-    end)
-
-    -- Extract choices for InputSelector
-    local choices = {}
-    for _, item in ipairs(sort_data) do
-      table.insert(choices, item.choice)
-    end
-
-    return choices, projects
-  end
-
-  local function setup_project_tabs(project)
-    wezterm.time.call_after(0.3, function()
-      local workspace_windows = {}
-      for _, win in ipairs(mux.all_windows()) do
-        if win:get_workspace() == project.workspace then
-          table.insert(workspace_windows, win)
-        end
-      end
-
-      if #workspace_windows == 0 then return end
-      local mux_win = workspace_windows[1]
-
-      local tabs = project.tabs or {}
-      for i, tab_config in ipairs(tabs) do
-        local tab, pane
-        if i == 1 then
-          tab = mux_win:active_tab()
-          pane = tab:active_pane()
-          if project.cwd then
-            pane:send_text('cd ' .. project.cwd .. '\n')
-          end
-        else
-          tab, pane = mux_win:spawn_tab { cwd = project.cwd }
-          if project.cwd then
-            pane:send_text('cd ' .. project.cwd .. '\n')
-          end
-        end
-
-        if tab_config.cmd then
-          pane:send_text(tab_config.cmd .. '\n')
-        end
-      end
-
-      local first_tab = mux_win:tabs()[1]
-      if first_tab then
-        first_tab:activate()
-      end
-    end)
-  end
-
-  local function switch_or_start_project(window, pane, id)
-    local ws_name = id:match('^workspace:(.+)$')
-    if ws_name then
-      window:perform_action(act.SwitchToWorkspace { name = ws_name }, pane)
-      return
-    end
-
-    local name = id:match('^project:(.+)$')
-    if not name then return end
-
-    local active = get_active_workspaces()
-    local projects = load_projects()
-    local project = projects[name]
-
-    if active[name] then
-      window:perform_action(act.SwitchToWorkspace { name = name }, pane)
-    else
-      window:perform_action(
-        act.SwitchToWorkspace {
-          name = name,
-          spawn = { cwd = project and project.cwd or wezterm.home_dir },
-        },
-        pane
-      )
-
-      if project and project.tabs then
-        setup_project_tabs(project)
-      end
-    end
-  end
-
+  -- デフォルトのキーバインドを無効化
+  config.disable_default_key_bindings = true
   config.leader = { key = ',', mods = 'CTRL', timeout_milliseconds = 1500 }
-
   config.keys = {
-    -- Tab operations
-    -- { key = 'c', mods = 'LEADER', action = act.SpawnTab 'CurrentPaneDomain' },          -- new tab
-    -- { key = 'n', mods = 'LEADER', action = act.ActivateTabRelative(1) },                -- next tab
-    -- { key = 'p', mods = 'LEADER', action = act.ActivateTabRelative(-1) },               -- previous tab
-    -- { key = '&', mods = 'LEADER|SHIFT', action = act.CloseCurrentTab { confirm = true } }, -- close tab
-    -- { key = 'w', mods = 'LEADER', action = act.ShowTabNavigator },                      -- list tabs
-    -- { key = ',', mods = 'LEADER', action = act.PromptInputLine {                        -- rename tab
-    --   description = 'Enter new tab name',
-    --   action = wezterm.action_callback(function(window, pane, line)
-    --     if line then
-    --       window:active_tab():set_title(line)
-    --     end
-    --   end),
-    -- }},
-
-    -- Pane operations
-    { key = 'l',     mods = 'LEADER|CTRL',       action = act.SplitHorizontal { domain = 'CurrentPaneDomain' } }, -- split horizontal
-    { key = 'j',     mods = 'LEADER|CTRL',       action = act.SplitVertical { domain = 'CurrentPaneDomain' } },   -- split vertical
-    { key = 'd',     mods = 'LEADER|CTRL',       action = act.CloseCurrentPane { confirm = true } },              -- close pane
-    { key = 'q',     mods = 'LEADER|CTRL',       action = act.RotatePanes 'Clockwise' },                          -- cycle layout
-    { key = 'Q',     mods = 'LEADER|SHIFT|CTRL', action = act.RotatePanes 'CounterClockwise' },                   -- cycle layout counter
-    { key = 'z',     mods = 'LEADER|CTRL',       action = act.TogglePaneZoomState },                              -- toggle zoom
-    { key = 'Space', mods = 'LEADER|CTRL',       action = act.ActivatePaneDirection 'Next' },                     -- next pane
-    { key = 'Space', mods = 'LEADER|SHIFT|CTRL', action = act.ActivatePaneDirection 'Prev' },                     -- previous pane
-    -- vimっぽい移動（nvimと干渉するからコメントアウト）
-    -- { key = 'h',     mods = 'CTRL',              action = act.ActivatePaneDirection 'Left' },
-    -- { key = 'j',     mods = 'CTRL',              action = act.ActivatePaneDirection 'Down' },
-    -- { key = 'k',     mods = 'CTRL',              action = act.ActivatePaneDirection 'Up' },
-    -- { key = 'l',     mods = 'CTRL',              action = act.ActivatePaneDirection 'Right' },
-
-    -- Resize panes
-    { key = 'n', mods = 'LEADER|CTRL', action = act.AdjustPaneSize { 'Left', 5 } },
-    { key = 'm', mods = 'LEADER|CTRL', action = act.AdjustPaneSize { 'Down', 5 } },
-    { key = ',', mods = 'LEADER|CTRL', action = act.AdjustPaneSize { 'Up', 5 } },
-    { key = '.', mods = 'LEADER|CTRL', action = act.AdjustPaneSize { 'Right', 5 } },
-
-    -- Copy mode
-    { key = '[', mods = 'LEADER', action = act.ActivateCopyMode },                      -- enter copy mode
-    { key = ']', mods = 'LEADER', action = act.PasteFrom 'Clipboard' },                 -- paste
-
-    -- Search & Quick Select
-    { key = '/', mods = 'LEADER', action = act.Search 'CurrentSelectionOrEmptyString' }, -- search
-    { key = 's', mods = 'LEADER', action = act.QuickSelect },                           -- quick select
-    { key = 'u', mods = 'LEADER', action = act.QuickSelectArgs {                        -- open URL
+    -- 基本操作
+    { key = 'Enter', mods = 'ALT', action = act.ToggleFullScreen },                           -- フルスクリーン
+    { key = 'y', mods = 'LEADER|CTRL', action = act.ActivateCopyMode },                       -- コピーモードに入る(ヤンク)
+    { key = 'p', mods = 'LEADER|CTRL', action = act.PasteFrom 'Clipboard' },                  -- ペースト
+    { key = ',', mods = 'LEADER|CTRL', action = act.ActivateCommandPalette },                 -- コマンドパレット表示
+    { key = 'q', mods = 'LEADER|CTRL', action = act.QuitApplication },                        -- 終了
+    { key = 'r', mods = 'LEADER|CTRL', action = act.ReloadConfiguration },                    -- 設定リロード
+    { key = 'f', mods = 'LEADER|CTRL', action = act.Search 'CurrentSelectionOrEmptyString' }, -- 検索
+    { key = 's', mods = 'LEADER|CTRL', action = act.QuickSelect },                            -- quick select
+    { key = 'u', mods = 'LEADER|CTRL', action = act.QuickSelectArgs {                         -- open URL
       label = 'open url',
       patterns = { 'https?://\\S+' },
       action = wezterm.action_callback(function(window, pane)
@@ -222,38 +26,33 @@ function M.setup(wezterm, config)
       end),
     }},
 
-    -- Workspace / Project
-    { key = 'f', mods = 'LEADER', action = wezterm.action_callback(function(window, pane) -- project launcher
-      local choices, _ = build_project_choices()
+    -- タブ操作
+    { key = 'Tab', mods = 'CTRL|SHIFT', action = wezterm.action.ActivateTabRelative(-1) },      -- タブ移動
+    { key = 'Tab', mods = 'CTRL',       action = wezterm.action.ActivateTabRelative(1) },       -- タブ移動
+    { key = 't',   mods = 'CTRL|SHIFT', action = wezterm.action.SpawnTab 'CurrentPaneDomain'},  -- タブ作成
+    -- 閉じる操作はペインがすべてなくなったのと同義にしようかな
+    -- {key = 't', mods = 'CTRL|SHIFT', action = wezterm.action.CloseCurrentTab},              -- タブを閉じる
 
-      if #choices == 0 then
-        window:toast_notification('WezTerm', 'No projects found in ' .. projects_dir, nil, 3000)
-        return
-      end
-
-      window:perform_action(
-        act.InputSelector {
-          title = 'Switch to Project',
-          choices = choices,
-          fuzzy = true,
-          action = wezterm.action_callback(function(inner_window, inner_pane, id, label)
-            if id then
-              switch_or_start_project(inner_window, inner_pane, id)
-            end
-          end),
-        },
-        pane
-      )
-    end)},
-
-    -- Misc
-    { key = 'd', mods = 'LEADER', action = act.QuitApplication },                       -- detach (quit)
-    { key = ':', mods = 'LEADER|SHIFT', action = act.ActivateCommandPalette },          -- command palette
-    { key = 'r', mods = 'LEADER', action = act.ReloadConfiguration },                   -- reload config
-    { key = 'b', mods = 'LEADER|CTRL', action = act.SendKey { key = 'b', mods = 'CTRL' } }, -- send Ctrl+b
+    -- ペイン操作
+    { key = 'h',     mods = 'ALT',            action = act.ActivatePaneDirection 'Left' },
+    { key = 'j',     mods = 'ALT',            action = act.ActivatePaneDirection 'Down' },
+    { key = 'k',     mods = 'ALT',            action = act.ActivatePaneDirection 'Up' },
+    { key = 'l',     mods = 'ALT',            action = act.ActivatePaneDirection 'Right' },
+    { key = '\\',    mods = 'CTRL|ALT',       action = act.SplitHorizontal { domain = 'CurrentPaneDomain' } }, -- 縦分割
+    { key = '-',     mods = 'CTRL|ALT',       action = act.SplitVertical { domain = 'CurrentPaneDomain' } },   -- 横分割
+    { key = 'w',     mods = 'CTRL|ALT',       action = act.CloseCurrentPane { confirm = true } },              -- 閉じる
+    { key = 'z',     mods = 'CTRL|ALT',       action = act.TogglePaneZoomState },                              -- ペインの最大化
+    { key = 'h', mods = 'CTRL|ALT', action = act.AdjustPaneSize { 'Left', 5 } },                               -- ペインサイズ変更
+    { key = 'j', mods = 'CTRL|ALT', action = act.AdjustPaneSize { 'Down', 5 } },
+    { key = 'k', mods = 'CTRL|ALT', action = act.AdjustPaneSize { 'Up', 5 } },
+    { key = 'l', mods = 'CTRL|ALT', action = act.AdjustPaneSize { 'Right', 5 } },
+    -- あんま使わんと思うからコメントアウト
+    -- { key = 'Space',     mods = 'CTRL|ALT',       action = act.RotatePanes 'Clockwise' },                          -- cycle layout
+    -- { key = 'Space',     mods = 'CTRL|ALT|SHIFT', action = act.RotatePanes 'CounterClockwise' },                   -- cycle layout counter
   }
 
   config.key_tables = {
+    -- コピーモードのキーバインドはvimっぽく
     copy_mode = {
       -- Movement
       { key = 'h', mods = 'NONE', action = act.CopyMode 'MoveLeft' },
